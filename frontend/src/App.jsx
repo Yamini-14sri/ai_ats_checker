@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 function App() {
   const [file, setFile] = useState(null);
@@ -12,20 +12,24 @@ function App() {
     }
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", file); // must match FastAPI param name
     formData.append("job_description", jd);
 
-    const res = await fetch("http://127.0.0.1:8000/upload", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await res.json();
-    setResult(data);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to backend");
+    }
   };
 
   return (
-    <div style={{ padding: 30 }}>
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h2>AI Resume ATS Checker</h2>
 
       <input type="file" onChange={e => setFile(e.target.files[0])} />
@@ -42,7 +46,10 @@ function App() {
       <button onClick={submitData}>Analyze</button>
 
       {result && (
-        <pre>{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ marginTop: 20 }}>
+          <h3>Results:</h3>
+          <pre>{JSON.stringify(result, null, 2)}</pre>
+        </div>
       )}
     </div>
   );
