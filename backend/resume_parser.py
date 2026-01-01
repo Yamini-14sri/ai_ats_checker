@@ -1,17 +1,16 @@
-from pypdf import PdfReader
-from docx import Document
+from PyPDF2 import PdfReader
+import docx
+from io import BytesIO
 
-def extract_text_from_pdf(file):
-    reader = PdfReader(file)
+def extract_text(file_bytes, filename):
     text = ""
-    for page in reader.pages:
-        text += page.extract_text()
-    return text
-
-
-def extract_text_from_docx(file):
-    doc = Document(file)
-    text = ""
-    for para in doc.paragraphs:
-        text += para.text + "\n"
-    return text
+    if filename.endswith(".pdf"):
+        reader = PdfReader(BytesIO(file_bytes))
+        for page in reader.pages:
+            text += page.extract_text() or ""
+    elif filename.endswith(".docx"):
+        doc = docx.Document(BytesIO(file_bytes))
+        text = "\n".join([p.text for p in doc.paragraphs])
+    else:
+        raise ValueError("Unsupported file type")
+    return text.strip()

@@ -1,0 +1,55 @@
+.container {
+  max-width: 700px;
+  margin: 50px auto;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 30px;
+  color: #0070f3;
+}
+
+.upload-card {
+  border: 1px solid #ddd;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  margin-bottom: 25px;
+}
+
+.upload-card input,
+.upload-card textarea {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.upload-card button {
+  padding: 12px 25px;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.upload-card button:hover {
+  background-color: #005bb5;
+}
+
+.result-card {
+  border: 1px solid #0070f3;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: #f0f8ff;
+  text-align: left;
+}
+
+.result-card h2 {
+  margin-bottom: 10px;
+}

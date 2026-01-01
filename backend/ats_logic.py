@@ -1,38 +1,37 @@
 import re
+from sklearn.feature_extraction.text import TfidfVectorizer
 
-STOPWORDS = {
-    "a", "an", "the", "and", "or", "with", "for", "to", "of", "in", "on"
-}
+SECTIONS = ["education", "experience", "projects", "skills", "certifications"]
 
-SKILL_SET = {
-    "python", "java", "sql", "react", "fastapi",
-    "machine learning", "deep learning", "nlp",
-    "data science", "tensorflow", "pytorch",
-    "git", "github"
-}
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    return text
 
-REQUIRED_SECTIONS = ["skills", "experience", "education", "projects"]
+def extract_keywords(text, top_n=30):
+    vectorizer = TfidfVectorizer(stop_words='english', max_features=top_n)
+    X = vectorizer.fit_transform([text])
+    return set(vectorizer.get_feature_names_out())
 
-def clean_words(text):
-    words = re.findall(r"\b[a-z]+\b", text.lower())
-    return set(w for w in words if w not in STOPWORDS)
+def section_score(resume_text):
+    resume_text = clean_text(resume_text)
+    score = sum([1 for sec in SECTIONS if sec in resume_text])
+    return score / len(SECTIONS) * 100
 
-def calculate_ats_score(resume_text, job_description):
-    score = 0
+def ats_score(resume_text, jd_text=None):
+    resume_text = clean_text(resume_text)
+    resume_keywords = extract_keywords(resume_text)
 
-    resume_text_lower = resume_text.lower()
-    jd_lower = job_description.lower()
+    if jd_text:
+        jd_text = clean_text(jd_text)
+        jd_keywords = extract_keywords(jd_text)
+        matched = list(resume_keywords & jd_keywords)
+        score = len(matched) / max(len(jd_keywords), 1) * 100
+    else:
+        matched = []
+        score = section_score(resume_text)  # general ATS score based on resume sections
 
-    # 1️⃣ Section score (40)
-    section_score = sum(10 for s in REQUIRED_SECTIONS if s in resume_text_lower)
-    score += section_score
-
-    # 2️⃣ Skill matching (60)
-    matched_skills = []
-
-    for skill in SKILL_SET:
-        if skill in resume_text_lower and skill in jd_lower:
-            matched_skills.append(skill)
-            score += 60 / len(SKILL_SET)
-
-    return round(min(score, 100), 2), matched_skills
+    return {
+        "ATS_Score": round(score, 2),
+        "Matched_Skills": matched
+    }
