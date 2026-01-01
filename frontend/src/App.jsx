@@ -1,58 +1,60 @@
 import React, { useState } from "react";
 
-function App() {
+export default function App() {
   const [file, setFile] = useState(null);
   const [jd, setJd] = useState("");
   const [result, setResult] = useState(null);
 
-  const submitData = async () => {
-    if (!file || !jd) {
-      alert("Please select a file and enter job description!");
-      return;
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     const formData = new FormData();
-    formData.append("file", file); // must match FastAPI param name
+    formData.append("file", file);
     formData.append("job_description", jd);
 
-    try {
-      const res = await fetch("http://127.0.0.1:8000/upload", {
-        method: "POST",
-        body: formData
-      });
-      const data = await res.json();
-      setResult(data);
-    } catch (err) {
-      console.error(err);
-      alert("Error connecting to backend");
-    }
+    const res = await fetch("http://127.0.0.1:8000/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    setResult(data);
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div style={{ padding: "40px", fontFamily: "Arial" }}>
       <h2>AI Resume ATS Checker</h2>
 
-      <input type="file" onChange={e => setFile(e.target.files[0])} />
-      <br /><br />
+      <form onSubmit={handleSubmit}>
+        <input
+          type="file"
+          accept=".pdf,.docx"
+          onChange={(e) => setFile(e.target.files[0])}
+          required
+        />
+        <br /><br />
 
-      <textarea
-        placeholder="Paste Job Description"
-        rows="6"
-        cols="50"
-        onChange={e => setJd(e.target.value)}
-      />
-      <br /><br />
+        <textarea
+          placeholder="Paste Job Description (optional)"
+          rows="6"
+          cols="60"
+          value={jd}
+          onChange={(e) => setJd(e.target.value)}
+        />
+        <br /><br />
 
-      <button onClick={submitData}>Analyze</button>
+        <button type="submit">Analyze Resume</button>
+      </form>
 
       {result && (
-        <div style={{ marginTop: 20 }}>
-          <h3>Results:</h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ marginTop: "30px" }}>
+          <h3>Results</h3>
+          <p><b>ATS Score:</b> {result.ATS_Score}</p>
+          <p><b>Semantic Match:</b> {result.Semantic_Match}</p>
+          <p><b>Final Score:</b> {result.Final_Score}</p>
+          <p><b>Matched Skills:</b> {result.Matched_Skills?.join(", ")}</p>
         </div>
       )}
     </div>
   );
 }
-
-export default App;
