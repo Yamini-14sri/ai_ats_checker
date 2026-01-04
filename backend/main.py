@@ -17,5 +17,5 @@ async def upload_resume(
     file: UploadFile,
     job_description: str = Form("")
 ):
-    resume_text = extract_text(file)
+    resume_text = extract_text(file.file, file.filename)
     return analyze_resume(resume_text, job_description)

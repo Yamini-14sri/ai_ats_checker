@@ -1,16 +1,13 @@
-from PyPDF2 import PdfReader
-import docx
-from io import BytesIO
+import pdfplumber
+import docx2txt
 
-def extract_text(file_bytes, filename):
-    text = ""
+def extract_text(file, filename):
     if filename.endswith(".pdf"):
-        reader = PdfReader(BytesIO(file_bytes))
-        for page in reader.pages:
-            text += page.extract_text() or ""
+        with pdfplumber.open(file) as pdf:
+            return "\n".join(page.extract_text() or "" for page in pdf.pages)
+
     elif filename.endswith(".docx"):
-        doc = docx.Document(BytesIO(file_bytes))
-        text = "\n".join([p.text for p in doc.paragraphs])
+        return docx2txt.process(file)
+
     else:
-        raise ValueError("Unsupported file type")
-    return text.strip()
+        return ""
