@@ -1,3 +1,4 @@
+# resume_parser.py
 import pdfplumber
 import docx2txt
 
@@ -9,5 +10,4 @@ def extract_text(file, filename):
     elif filename.endswith(".docx"):
         return docx2txt.process(file)
 
-    else:
-        return ""
+    return ""
