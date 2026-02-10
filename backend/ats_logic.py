@@ -2,76 +2,160 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 import re
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# ----------------------------
+# Load model once
+# ----------------------------
+_model = None
 
-def clean(text):
-    return re.sub(r"[^a-zA-Z ]", " ", text.lower())
+def get_model():
+    global _model
+    if _model is None:
+        _model = SentenceTransformer("all-MiniLM-L6-v2")
+    return _model
 
-def semantic_similarity(a, b):
+
+# ----------------------------
+# Text cleaning
+# ----------------------------
+def clean(text: str) -> str:
+    text = text.lower()
+    text = re.sub(r"[^a-z ]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+# ----------------------------
+# Semantic similarity
+# ----------------------------
+def semantic_similarity(a: str, b: str) -> float:
+    model = get_model()
     emb = model.encode([a, b])
     score = cosine_similarity([emb[0]], [emb[1]])[0][0]
-    return float(round(score * 100, 2))   # 🔴 force Python float
+    return round(score * 100, 2)
 
-def detect_domain(jd):
-    tech_words = ["python", "java", "react", "ml", "ai", "sql"]
-    return "TECH" if any(w in jd.lower() for w in tech_words) else "NON_TECH"
 
-def extract_keywords(text):
-    return set(word for word in text.split() if len(word) > 4)
-
-def resume_only_analysis(resume):
-    resume = clean(resume)
-
-    sections = {
-        "skills": "skill" in resume,
-        "experience": "experience" in resume,
-        "education": "education" in resume,
-        "projects": "project" in resume
+# ----------------------------
+# Keyword extraction (STRICT)
+# ----------------------------
+def extract_keywords(text: str) -> set:
+    stopwords = {
+        "with","care","valid","education","computer","using","work","team",
+        "experience","skills","knowledge","ability","good","strong",
+        "role","responsibilities","candidate","required","preferred",
+        "health","basic","and","the","for","from","this","that"
     }
-
-    section_score = sum(sections.values()) * 20
-    length_score = min(len(resume.split()) / 600, 1) * 40
-    final = float(round(section_score + length_score, 2))  # 🔴
-
     return {
-        "Mode": "Resume Only",
-        "Resume_Quality_Score": final,
-        "Sections": sections,
-        "Verdict": "Strong" if final >= 70 else "Average" if final >= 40 else "Weak"
+        w for w in text.split()
+        if len(w) > 3 and w not in stopwords
     }
 
-def resume_vs_jd_analysis(resume, jd):
+
+# ----------------------------
+# Resume-based role suggestion
+# ----------------------------
+def suggest_roles(resume_words: set) -> list:
+    roles_map = {
+        "AI Engineer": {"ai","ml","deep","learning","nlp","transformer"},
+        "Data Scientist": {"python","statistics","analysis","model"},
+        "Software Engineer": {"java","python","c","c++","backend","frontend"},
+        "Web Developer": {"html","css","javascript","react","node"},
+        "Embedded Engineer": {"embedded","microcontroller","arduino","arm"},
+        "Electronics Engineer": {"electronics","circuits","signal","vlsi"},
+        "IoT Engineer": {"iot","sensor","embedded","raspberry","arduino"},
+        "Data Analyst": {"sql","excel","dashboard","visualization"},
+        "Healthcare AI Engineer": {"healthcare","medical","diagnosis","ai","ml"}
+    }
+
+    suggestions = []
+    for role, skills in roles_map.items():
+        if len(resume_words & skills) >= 2:
+            suggestions.append(role)
+
+    return suggestions
+
+
+# ----------------------------
+# MAIN ANALYSIS
+# ----------------------------
+def analyze_resume(resume: str, jd: str) -> dict:
+
     resume_clean = clean(resume)
-    jd_clean = clean(jd)
+    resume_words = extract_keywords(resume_clean)
 
-    semantic = semantic_similarity(resume_clean, jd_clean)
-
-    if detect_domain(jd) == "NON_TECH":
+    # ❌ Resume empty
+    if not resume_words:
         return {
-            "Mode": "Resume vs JD",
-            "Semantic_Match": semantic,
-            "ATS_Score": float(round(semantic * 0.6, 2)),  # 🔴 still give score
-            "Verdict": "Non-IT JD evaluated using semantic relevance"
+            "ATS_Score": 0,
+            "Semantic_Match": 0,
+            "Final_Score": 0,
+            "Matched_Skills": [],
+            "Missing_Skills": [],
+            "Message": "Resume text could not be extracted properly.",
+            "Suggested_Roles": [],
+            "Verdict": "Invalid Resume"
         }
 
-    resume_words = extract_keywords(resume_clean)
+    # ❌ JD missing
+    if not jd.strip():
+        return {
+            "ATS_Score": 0,
+            "Semantic_Match": 0,
+            "Final_Score": 0,
+            "Matched_Skills": [],
+            "Missing_Skills": [],
+            "Message": "Job Description not provided. Resume analyzed independently.",
+            "Suggested_Roles": suggest_roles(resume_words),
+            "Verdict": "Resume Only"
+        }
+
+    jd_clean = clean(jd)
     jd_words = extract_keywords(jd_clean)
 
     matched = sorted(resume_words & jd_words)
     missing = sorted(jd_words - resume_words)
 
-    ats = float(round((semantic * 0.7) + (len(matched) * 2), 2))  # 🔴
+    semantic = semantic_similarity(resume_clean, jd_clean)
 
+    # 🔴 STRONG MISMATCH
+    if semantic < 35 or len(matched) <= 1:
+        return {
+            "ATS_Score": round(semantic * 0.4, 2),
+            "Semantic_Match": semantic,
+            "Final_Score": round(semantic * 0.4, 2),
+            "Matched_Skills": matched,
+            "Missing_Skills": missing[:15],
+            "Message": (
+                "⚠️ Resume and Job Description belong to different domains. "
+                "Only minimal relevance was detected."
+            ),
+            "Suggested_Roles": suggest_roles(resume_words),
+            "Verdict": "Mismatch"
+        }
+
+    # 🟡 PARTIAL MATCH
+    if semantic < 60:
+        return {
+            "ATS_Score": round(semantic * 0.7, 2),
+            "Semantic_Match": semantic,
+            "Final_Score": round(semantic * 0.7, 2),
+            "Matched_Skills": matched[:15],
+            "Missing_Skills": missing[:15],
+            "Message": (
+                "⚠️ Resume partially matches the Job Description. "
+                "Skill gap exists."
+            ),
+            "Suggested_Roles": suggest_roles(resume_words),
+            "Verdict": "Partial Match"
+        }
+
+    # ✅ GOOD MATCH
     return {
-        "Mode": "Resume vs JD",
-        "ATS_Score": ats,
+        "ATS_Score": semantic,
         "Semantic_Match": semantic,
+        "Final_Score": semantic,
         "Matched_Skills": matched[:15],
         "Missing_Skills": missing[:15],
-        "Verdict": "Good Fit" if ats >= 70 else "Partial" if ats >= 40 else "Poor"
+        "Message": "✅ Resume strongly matches the Job Description.",
+        "Suggested_Roles": suggest_roles(resume_words),
+        "Verdict": "Good Match"
     }
-
-def analyze_resume(resume, jd):
-    if not jd.strip():
-        return resume_only_analysis(resume)
-    return resume_vs_jd_analysis(resume, jd)
