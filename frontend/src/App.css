@@ -1,70 +1,80 @@
 body {
-  background: #f4f6f8;
-}
-
-.container {
-  max-width: 700px;
-  margin: 60px auto;
+  margin: 0;
   font-family: Arial, sans-serif;
-  text-align: center;
-}
-
-h1 {
-  margin-bottom: 30px;
-  color: #1e293b;
-}
-
-.upload-card {
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  margin-bottom: 30px;
-}
-
-.upload-card input,
-.upload-card textarea {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  font-size: 15px;
-}
-
-.upload-card textarea {
-  resize: none;
-}
-
-.upload-card button {
-  width: 100%;
-  padding: 14px;
-  background-color: #2563eb;
+  background: #0f172a;
   color: white;
-  border: none;
-  border-radius: 10px;
+}
+
+/* NAVBAR */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background: #020617;
+}
+
+.navbar a {
+  margin-left: 20px;
+  color: white;
+  text-decoration: none;
+}
+
+/* PAGE */
+
+.page {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+/* BUTTONS */
+
+.btn {
+  background: #3b82f6;
+  padding: 12px 22px;
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+  margin: 10px;
+  display: inline-block;
+}
+
+.secondary {
+  background: #1e293b;
+}
+
+/* CARDS */
+
+.card {
+  background: #020617;
+  padding: 20px;
+  margin: 15px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* DASHBOARD */
+
+.dashboard .card {
+  width: 220px;
   cursor: pointer;
-  font-size: 16px;
 }
 
-.upload-card button:hover {
-  background-color: #1e40af;
-}
+/* CHAT */
 
-.result-card {
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 25px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  text-align: left;
-}
-
-.result-card h2 {
+.chat-box {
+  background: #020617;
+  padding: 20px;
+  border-radius: 12px;
   margin-bottom: 15px;
-  color: #0f172a;
 }
 
-.result-card p {
-  margin: 8px 0;
-  font-size: 15px;
+/* FORM */
+
+.form-page input {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  width: 260px;
 }
+
