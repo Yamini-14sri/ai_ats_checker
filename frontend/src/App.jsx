@@ -1,68 +1,49 @@
-import React, { useState } from "react";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import "./App.css";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
+import Home from "./pages/Home";
+import Features from "./pages/Features";
+import Pricing from "./pages/Pricing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Dashboard from "./pages/Dashboard";
+import ATSChecker from "./pages/ATSChecker";
+import Interview from "./pages/Interview";
+import Suggestions from "./pages/Suggestions";
 
 export default function App() {
-  const [file, setFile] = useState(null);
-  const [jd, setJd] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file) return;
-
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("job_description", jd);
-
-    const res = await fetch("http://127.0.0.1:8000/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    setResult(data);
-    setLoading(false);
-  };
-
   return (
-    <div className="container">
-      <h1>AI Resume ATS Checker</h1>
+    <BrowserRouter>
+      
+      {/* 🔹 Global Background */}
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 text-gray-800">
 
-      <div className="upload-card">
-        <form onSubmit={handleSubmit}>
-          <input
-            type="file"
-            accept=".pdf,.docx"
-            onChange={(e) => setFile(e.target.files[0])}
-            required
-          />
+        {/* 🔹 Top Navigation */}
+        <Navbar />
 
-          <textarea
-            placeholder="Paste Job Description (optional)"
-            rows="6"
-            value={jd}
-            onChange={(e) => setJd(e.target.value)}
-          />
+        {/* 🔹 Main Content */}
+        <main className="pt-20 px-4 md:px-10 lg:px-20">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/ats" element={<ATSChecker />} />
+            <Route path="/interview" element={<Interview />} />
+            <Route path="/suggestions" element={<Suggestions />} />
+          </Routes>
+        </main>
 
-          <button type="submit">
-            {loading ? "Analyzing..." : "Analyze Resume"}
-          </button>
-        </form>
+        {/* 🔹 Footer */}
+        <Footer />
+
       </div>
 
-      {result && (
-        <div className="result-card">
-          <h2>Analysis Result</h2>
-          <p><b>ATS Score:</b> {result.ATS_Score}</p>
-          <p><b>Semantic Match:</b> {result.Semantic_Match}</p>
-          <p><b>Final Score:</b> {result.Final_Score}</p>
-          <p><b>Matched Skills:</b> {result.Matched_Skills?.join(", ")}</p>
-        </div>
-      )}
-    </div>
+    </BrowserRouter>
   );
 }
