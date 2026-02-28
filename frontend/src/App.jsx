@@ -1,12 +1,11 @@
-import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 
 import Home from "./pages/Home";
 import Features from "./pages/Features";
-import Pricing from "./pages/Pricing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
@@ -15,35 +14,49 @@ import Interview from "./pages/Interview";
 import Suggestions from "./pages/Suggestions";
 
 export default function App() {
+  const [authToken, setAuthToken] = useState(localStorage.getItem("authToken"));
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const handleLogin = (token, userData) => {
+    setAuthToken(token);
+    setUser(userData);
+    localStorage.setItem("authToken", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setAuthToken(null);
+    setUser(null);
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+  };
+
   return (
     <BrowserRouter>
-      
-      {/* 🔹 Global Background */}
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 text-gray-800">
-
+      <div className="min-h-screen bg-white flex flex-col">
         {/* 🔹 Top Navigation */}
-        <Navbar />
+        <Navbar user={user} onLogout={handleLogout} />
 
         {/* 🔹 Main Content */}
-        <main className="pt-20 px-4 md:px-10 lg:px-20">
+        <main className="flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/features" element={<Features />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/ats" element={<ATSChecker />} />
-            <Route path="/interview" element={<Interview />} />
-            <Route path="/suggestions" element={<Suggestions />} />
+            <Route path="/login" element={authToken ? <Navigate to="/dashboard" /> : <Login onLogin={handleLogin} />} />
+            <Route path="/signup" element={authToken ? <Navigate to="/dashboard" /> : <Signup onSignup={handleLogin} />} />
+            <Route path="/dashboard" element={authToken ? <Dashboard user={user} /> : <Navigate to="/login" />} />
+            <Route path="/ats" element={authToken ? <ATSChecker user={user} /> : <Navigate to="/login" />} />
+            <Route path="/interview" element={authToken ? <Interview /> : <Navigate to="/login" />} />
+            <Route path="/suggestions" element={authToken ? <Suggestions /> : <Navigate to="/login" />} />
           </Routes>
         </main>
 
         {/* 🔹 Footer */}
         <Footer />
-
       </div>
-
     </BrowserRouter>
   );
 }
