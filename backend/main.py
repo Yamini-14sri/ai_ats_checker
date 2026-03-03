@@ -135,9 +135,46 @@ async def get_user_resumes(authorization: Optional[str] = None):
     
     return SAVED_RESUMES.get(email, [])
 
+
+# ---------- profile endpoints ----------
+@app.get('/profile')
+async def get_profile(authorization: Optional[str] = None):
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail='Missing token')
+    token = authorization.split(' ')[1]
+    payload = verify_token(token)
+    email = payload.get('email')
+    user = USERS_DB.get(email)
+    if not user:
+        raise HTTPException(status_code=404, detail='User not found')
+    return {
+        'name': user.get('name'),
+        'email': user.get('email'),
+        'created_at': user.get('created_at')
+    }
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+
+@app.put('/profile')
+async def update_profile(update: ProfileUpdate, authorization: Optional[str] = None):
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(status_code=401, detail='Missing token')
+    token = authorization.split(' ')[1]
+    payload = verify_token(token)
+    email = payload.get('email')
+    user = USERS_DB.get(email)
+    if not user:
+        raise HTTPException(status_code=404, detail='User not found')
+    if update.name:
+        user['name'] = update.name
+    # create a new token in case name changed
+    token = create_token(email, user['name'])
+    return {'name': user['name'], 'email': user['email'], 'created_at': user.get('created_at'), 'token': token}
+
 @app.get("/job-suggestions")
 async def get_job_suggestions(authorization: Optional[str] = None):
-    """Get personalized job suggestions"""
+    """Get personalized job suggestions based on recent analyses."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing token")
     
@@ -145,18 +182,25 @@ async def get_job_suggestions(authorization: Optional[str] = None):
     payload = verify_token(token)
     email = payload.get("email")
     
-    # Return mock job suggestions based on user analyses
     analyses = USER_ANALYSES.get(email, [])
-    
     if not analyses:
         return []
     
-    # Mock recommendations
-    return [
-        {"role": "Senior Software Engineer", "match": 92, "company": "Google"},
-        {"role": "Product Manager", "match": 88, "company": "Microsoft"},
-        {"role": "ML Engineer", "match": 85, "company": "OpenAI"},
-    ]
+    # build suggestions from analyses history
+    suggestions = []
+    seen = set()
+    for a in analyses:
+        role = a.get("role") or "Unknown"
+        if role in seen:
+            continue
+        seen.add(role)
+        match = a.get("score", 0)
+        # clamp to 100
+        match = min(100, int(match))
+        suggestions.append({"role": role, "match": match, "company": "Based on past analysis"})
+        if len(suggestions) >= 5:
+            break
+    return suggestions
 
 
 @app.post("/upload")
@@ -191,11 +235,20 @@ async def upload_resume(
         USER_ANALYSES[email].insert(0, analysis_record)  # Add to beginning of list
         
         # Save resume to user's resumes
+        # try to determine file size
+        size_bytes = None
+        try:
+            file.file.seek(0, 2)
+            size_bytes = file.file.tell()
+            file.file.seek(0)
+        except Exception:
+            size_bytes = None
+        display_size = f"{size_bytes} bytes" if size_bytes is not None else "Unknown"
         resume_record = {
             "id": len(SAVED_RESUMES[email]) + 1,
             "name": file.filename,
             "updated": datetime.now().isoformat(),
-            "size": "Unknown"
+            "size": display_size
         }
         SAVED_RESUMES[email].insert(0, resume_record)
 

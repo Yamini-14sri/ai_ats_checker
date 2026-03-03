@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import React, { useState } from "react";
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, User } from 'lucide-react';
 
 export default function Navbar({ user, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,6 +37,9 @@ export default function Navbar({ user, onLogout }) {
             {user ? (
               <>
                 <span className="text-gray-700 font-medium">Hi, {user.name}</span>
+                <Link to="/profile" className="ml-3 text-gray-600 hover:text-blue-600 transition">
+                  <User size={24} />
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium transition flex items-center space-x-1"
@@ -72,6 +75,7 @@ export default function Navbar({ user, onLogout }) {
             <Link to="/" className="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg transition">Home</Link>
             <Link to="/features" className="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg transition">Features</Link>
             {user && <Link to="/dashboard" className="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg transition">Dashboard</Link>}
+            {user && <Link to="/profile" className="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg transition">Profile</Link>}
             <div className="flex flex-col space-y-2 px-4">
               {user ? (
                 <>

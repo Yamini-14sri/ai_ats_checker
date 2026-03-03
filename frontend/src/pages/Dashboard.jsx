@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { History, FileText, Briefcase, Settings, LogOut, Plus, Loader } from 'lucide-react';
+import { History, FileText, Briefcase, Settings, LogOut, Plus, Loader, User } from 'lucide-react';
 import { Link } from "react-router-dom";
 
 const API_URL = "http://localhost:8000";
@@ -122,9 +122,14 @@ export default function Dashboard({ user }) {
     <div className="pt-16">
       {/* Header */}
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.name || 'User'}!</h1>
-          <p className="text-blue-100">Manage your resumes and track your progress</p>
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Welcome back, {user?.name || 'User'}!</h1>
+            <p className="text-blue-100">Manage your resumes and track your progress</p>
+          </div>
+          <Link to="/profile" className="text-blue-200 hover:text-white transition">
+            <User className="" size={32} />
+          </Link>
         </div>
       </section>
 
@@ -200,7 +205,7 @@ export default function Dashboard({ user }) {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{analysis.title}</h3>
-                        <p className="text-sm text-gray-600">For: {analysis.role || 'N/A'} • {analysis.date}</p>
+                        <p className="text-sm text-gray-600">For: {analysis.role || 'N/A'} • {analysis.date ? new Date(analysis.date).toLocaleString() : ''}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-600">{analysis.score}</div>
@@ -248,7 +253,7 @@ export default function Dashboard({ user }) {
                         <FileText className="text-blue-600" size={32} />
                         <div>
                           <h3 className="font-semibold text-gray-900">{resume.name}</h3>
-                          <p className="text-sm text-gray-600">{resume.size} • Updated {resume.updated}</p>
+                          <p className="text-sm text-gray-600">{resume.size} • Updated {resume.updated ? new Date(resume.updated).toLocaleString() : ''}</p>
                         </div>
                       </div>
                       <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
